@@ -1,0 +1,30 @@
+{
+  "name": "Lunch-and-Learn-Promise",
+  "version": "0.0.1",
+  "description": "A simple implementation of a JavaScript Promise",
+  "main": "src/Promise.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "grunt tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scottrippey/Lunch-and-Learn-Promise.git"
+  },
+  "keywords": [
+    "Promise"
+  ],
+  "author": "Scott Rippey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/scottrippey/Lunch-and-Learn-Promise/issues"
+  },
+  "homepage": "https://github.com/scottrippey/Lunch-and-Learn-Promise",
+  "devDependencies": {
+    "grunt": "^0.4.4",
+    "grunt-contrib-jasmine": "^0.6.3",
+    "grunt-config-merge": "^1.2.0"
+  }
+}

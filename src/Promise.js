@@ -163,11 +163,3 @@
 	xhr.json = function(options) {
 		return xhr(options).then(function(responseText) { return JSON.parse(responseText); });
 	};
-	xhr.autoRetry(function(options, retries) {
-		return xhr(options).then(null, function(error) {
-			if (retries === 0)
-				return error;
-			else
-				return xhr.autoRetry(options, retries - 1);
-		});
-	});
