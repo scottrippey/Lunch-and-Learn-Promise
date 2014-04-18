@@ -1,25 +1,24 @@
 	/* Promise static methods; utilities for promises */
 
-	Promise.isPromise = function(promise) {
+    Promise.isPromise = function(promise) {
+   		return (promise instanceof Promise) || (typeof promise === 'object' && typeof promise.then === 'function');
+   	};
+   	Promise.from = function(promise) {
+   		return Promise.isPromise(promise) ? promise : Promise.wrap(promise);
+   	};
+   	Promise.wrap = function(result) {
+   		return new Promise(function(resolve, reject) { resolve(result); });
+   	};
+   	Promise.wrapError = function(error) {
+   		return new Promise(function(resolve, reject) { reject(error); });
+   	};
 
-	};
-
-	Promise.from = function(promise) {
-
-	};
-
-	Promise.resolved = function(result) {
-
-	};
-
-	Promise.rejected = function(error) {
-
-	};
-
-	Promise.delay = function(delay) {
-
-	};
-
+    Promise.delay = function(delay) {
+   		return new Promise(function(resolve, reject) {
+   			setTimeout(resolve, delay);
+   		});
+   	};
+   
 	Promise.all = function(promises) {
 		return new Promise(function(resolve, reject) {
 			var remaining = promises.length, results = new Array(remaining);
