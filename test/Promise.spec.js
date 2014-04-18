@@ -1,21 +1,40 @@
 
-var resolved = function(result) { return new Promise(function(res,rej){ res(result); })};
-var rejected = function(error) { return new Promise(function(res,rej) { rej(error); })};
+/* Override setImmediate, to get synchronous results */
 
-var __asyncCallbacks = [];
+var asyncCallbacks = [];
 setImmediate = function(callback) {
-    __asyncCallbacks.push(callback);
+    asyncCallbacks.push(callback);
 };
 simulateAsync = function() {
-    for (var i = 0; i < __asyncCallbacks.length; i++) {
-        __asyncCallbacks[i]();
+    for (var i = 0; i < asyncCallbacks.length; i++) {
+        asyncCallbacks[i]();
     }
-    __asyncCallbacks.length = 0;
+    asyncCallbacks.length = 0;
 };
+Promise.prototype.getResultNow = function() {
+	var promiseResult;
+	this.done(function(result) { promiseResult = result; });
+	simulateAsync();
+	return promiseResult;
+};
+Promise.prototype.getErrorNow = function() {
+	var promiseError;
+	this.done(null, function(error) { promiseError = error; });
+	simulateAsync();
+	return promiseError;
+};
+
+
+
+/* Test helper methods: */
+
+var resolved = function(result) { return new Promise(function(res,rej){ res(result); })};
+var rejected = function(error) { return new Promise(function(res,rej) { rej(error); })};
 
 var spyAssertions = [];
 var shouldPass = function() {
     var spy = jasmine.createSpy("shouldPass");
+	spy.and.callFake(function(arg) { return arg; });
     spyAssertions.push(function() {
         expect(spy).toHaveBeenCalled();
     });
@@ -23,6 +42,7 @@ var shouldPass = function() {
 };
 var shouldFail = function() {
     var spy = jasmine.createSpy("shouldFail");
+	spy.and.callFake(function(arg) { return arg; });
     spyAssertions.push(function() {
         expect(spy).not.toHaveBeenCalled();
     });
@@ -34,18 +54,8 @@ afterEach(function() {
     spyAssertions.length = 0;
 });
 
-Promise.prototype.getResult = function() {
-    var promiseResult;
-    this.done(function(result) { promiseResult = result; });
-    simulateAsync();
-    return promiseResult;
-};
-Promise.prototype.getError = function() {
-    var promiseError;
-    this.done(null, function(error) { promiseError = error; });
-    simulateAsync();
-    return promiseError;
-};
+
+
 
 describe('Promise', function() {
     
@@ -83,42 +93,31 @@ describe('Promise', function() {
             rejected().then().then().then(shouldFail(), shouldPass());
         });
         it("should pass through", function() {
-            var chainedResult;
-            resolved("hello").then().then(function(result) {
-                chainedResult = result;
-            });
-            simulateAsync();
-            expect(chainedResult).toBe("hello");
+            var result = resolved("hello").then(null, shouldFail()).getResultNow();
+            expect(result).toBe("hello");
             
-            rejected("goodbye").then().then(null, function(error) {
-                chainedResult = error;
-            });
-            simulateAsync();
-            expect(chainedResult).toBe("goodbye");
+            result = rejected("goodbye").then(shouldFail(), null).getErrorNow();
+            expect(result).toBe("goodbye");
 
         });
         it("should mutate", function() {
-            var chainedResult;
-            resolved("hello").then(function(result) { return result.toUpperCase(); }).then(function(result) {
-                chainedResult = result;
-            });
-            simulateAsync();
-            expect(chainedResult).toBe("HELLO");
+            var result = resolved("hello").then(function(result) { return result.toUpperCase(); }).getResultNow();
+            expect(result).toBe("HELLO");
         });
         it("should unwrap returned promises", function() {
-            var chainedResult;
-            resolved("hello").then(function() {
-                return resolved("hi");
-            }).then(function(result) {
-                chainedResult = result;
-            });
-            simulateAsync();
-            expect(chainedResult).toBe("hi");
+            var result = resolved("hello").then(function(result) {
+                return resolved(result + " world");
+            }).getResultNow();
+            expect(result).toBe("hello world");
         });
-        it("should switch resolutions", function() {
-            resolved().then(shouldPass(), shouldFail())
-                .then(function() { return rejected(); }).then(shouldFail(), shouldPass())
-                .then(null, function() { return resolved(); }).then(shouldPass(), shouldFail());
+        it("should switch states", function() {
+            var result = resolved("success").then(shouldPass(), shouldFail())
+                .then(function(result) { return rejected(result + " fail"); })
+	            .then(shouldFail(), shouldPass())
+                .then(null, function(error) { return resolved(error + " success"); })
+	            .then(shouldPass(), shouldFail())
+	            .getResultNow();
+	        expect(result).toBe("success fail success");
         });
     });
     
@@ -128,68 +127,47 @@ describe('Promise', function() {
 describe('Promise static methods', function() {
     describe("all", function() {
         it("should join several results", function() {
-            var result = Promise.all([ resolved(1), resolved(2), resolved(3) ]).getResult();
+            var result = Promise.all([ resolved(1), resolved(2), resolved(3) ]).getResultNow();
             expect(result).toEqual([1,2,3])
         });
         it("should fail if 1 of them fail", function() {
-            var error = Promise.all([ resolved(1), rejected(2), resolved(3) ]).getError();
+            var error = Promise.all([ resolved(1), rejected(2), resolved(3) ]).getErrorNow();
             expect(error).toEqual(2);
         });
         it("should fail if 2 of them fail", function() {
-            var error = Promise.all([ resolved(1), rejected(2), resolved(3), rejected(4) ]).getError();
+            var error = Promise.all([ resolved(1), rejected(2), resolved(3), rejected(4) ]).getErrorNow();
             expect(error).toEqual(2);
         });
     });
     describe("any", function() {
         it("should succeed if 1 is successful", function() {
             var result;
-            result = Promise.any([ resolved(1), resolved(2), resolved(3) ]).getResult();
+            result = Promise.any([ resolved(1), resolved(2), resolved(3) ]).getResultNow();
             expect(result).toEqual(1);
             
-            result = Promise.any([ rejected(1), resolved(2), resolved(3) ]).getResult();
-            //expect(result).toEqual(2);
+            result = Promise.any([ rejected(1), resolved(2), resolved(3) ]).getResultNow();
+            expect(result).toEqual(2);
             
-            result = Promise.any([ rejected(1), rejected(2), resolved(3) ]).getResult();
-            //expect(result).toEqual(3);
+            result = Promise.any([ rejected(1), rejected(2), resolved(3) ]).getResultNow();
+            expect(result).toEqual(3);
         });
         it("should fail if they all fail", function() {
-            var error = Promise.any([ rejected(1), rejected(2), rejected(3) ]).getError();
-            expect(error).toEqual(1);
+            var error = Promise.any([ rejected(1), rejected(2), rejected(3) ]).getErrorNow();
+            expect(error).toEqual([ 1, 2, 3 ]);
         });
     });
 });
 
-
 describe('Deferred', function() {
-    var d, state, UNRESOLVED = 0, RESOLVED = 1, REJECTED = 2;
-    beforeEach(function() {
-        d = new Deferred();
-        state = UNRESOLVED;
-        d.promise.done(function() {
-            state = RESOLVED;
-        }, function() {
-            state = REJECTED;
-        });
-    });
-    
     it("should ignore multiple resolutions", function() {
-        expect(state).toBe(UNRESOLVED);
-        d.resolve(); simulateAsync();
-        expect(state).toBe(RESOLVED);
-        d.reject(); simulateAsync();
-        expect(state).toBe(RESOLVED);
-        d.resolve(); simulateAsync();
-        expect(state).toBe(RESOLVED);
-        d.reject(); simulateAsync();
-        expect(state).toBe(RESOLVED);
+	    var d = new Deferred();
+        expect(d.promise.getResultNow()).toBe(undefined);
+        d.resolve("success");
+        expect(d.promise.getResultNow()).toBe("success");
+        d.reject("ignore this");
+        expect(d.promise.getResultNow()).toBe("success");
+        expect(d.promise.getErrorNow()).toBe(undefined);
+        d.resolve("ignore this");
+	    expect(d.promise.getResultNow()).toBe("success");
     });
-    
-    it("should resolve async", function() {
-        expect(state).toBe(UNRESOLVED);
-        d.resolve();
-        expect(state).toBe(UNRESOLVED);
-        simulateAsync();
-        expect(state).toBe(RESOLVED);
-    });
-      
 });
