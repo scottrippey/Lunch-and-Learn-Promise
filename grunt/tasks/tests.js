@@ -4,7 +4,12 @@ module.exports = function(grunt) {
     grunt.mergeConfig({
         jasmine: {
             'all-specs': {
-                src: [ 'src/**/*.js' ],
+                src: [
+	                'src/Promise.js'
+	                ,'src/Promise-utils.js'
+	                ,'src/Deferred.js'
+	                ,'src/xhr.js'
+                ],
                 options: {
                     specs: [
 	                    'test/common.js'
