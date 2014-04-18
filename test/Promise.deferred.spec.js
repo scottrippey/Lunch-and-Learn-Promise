@@ -1,6 +1,6 @@
 describe('Deferred', function() {
     it("should ignore multiple resolutions", function() {
-	    var d = new Deferred();
+	    var d = Promise.deferred();
         expect(d.promise.getResultNow()).toBe(undefined);
         d.resolve("success");
         expect(d.promise.getResultNow()).toBe("success");

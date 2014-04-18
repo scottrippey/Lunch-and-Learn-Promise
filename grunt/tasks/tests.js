@@ -7,7 +7,7 @@ module.exports = function(grunt) {
                 src: [
 	                'src/Promise.js'
 	                ,'src/Promise-utils.js'
-	                ,'src/Deferred.js'
+	                ,'src/Promise.deferred.js'
 	                ,'src/xhr.js'
                 ],
                 options: {
@@ -15,7 +15,7 @@ module.exports = function(grunt) {
 	                    'test/common.js'
 	                    ,'test/Promise.spec.js'
 	                    ,'test/Promise-utils.spec.js'
-	                    ,'test/Deferred.spec.js'
+	                    ,'test/Promise.deferred.spec.js'
                     ]
                 }
             }
