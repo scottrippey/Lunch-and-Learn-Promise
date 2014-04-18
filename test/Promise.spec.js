@@ -10,6 +10,33 @@ describe('Promise', function() {
         it("should fire failure", function() {
             rejected().done(shouldFail(), shouldPass());
         });
+	    xit("should fire async, no matter what", function() {
+		    var resolve, state = "unresolved";
+		    new Promise(function(res, rej) {
+			    resolve = res;
+		    }).done(function() {
+				state = "resolved";
+		    });
+		    
+		    expect(state).toBe("unresolved");
+		    resolve();
+		    expect(state).toBe("unresolved");
+		    simulateAsync();
+		    expect(state).toBe("resolved");
+		    
+		    var reject; state = "unresolved";
+		    new Promise(function(res,rej) {
+			    reject = rej;
+		    }).done(null, function() {
+				state = "rejected";
+		    });
+		    
+		    expect(state).toBe("unresolved");
+		    reject();
+		    expect(state).toBe("unresolved");
+		    simulateAsync();
+		    expect(state).toBe("rejected");
+	    });
         xit("should accept many callbacks", function() {
             var p = resolved();
             p.done(shouldPass(), shouldFail());
