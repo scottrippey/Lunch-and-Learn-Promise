@@ -1,4 +1,4 @@
-	/* Deferred is a different API that exposes resolve, reject, and promise */
+	/* A Deferred controls a Promise by exposing resolve, reject, and promise as properties */
 	function Deferred() {
 		if (!(this instanceof Deferred)) return new Deferred();
 
