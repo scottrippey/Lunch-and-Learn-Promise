@@ -51,25 +51,32 @@
 	/* Promise prototype methods; everything relies on Promise.done */
 
 	Promise.prototype.then = function(success, failure) {
-		var wrapper = Deferred();
-
-		this.done(!success ? wrapper.resolve : function(result) {
-			var thenSuccessResult = success(result);
-			if (!Promise.isPromise(thenSuccessResult)) {
-				wrapper.resolve(thenSuccessResult);
-			} else {
-				thenSuccessResult.done(wrapper.resolve, wrapper.reject);
-			}
-		}, !failure ? wrapper.reject : function(error) {
-			var thenFailureResult = failure(error);
-			if (!Promise.isPromise(thenFailureResult)) {
-				wrapper.reject(thenFailureResult);
-			} else {
-				thenFailureResult.done(wrapper.resolve, wrapper.reject);
-			}
+		var currentPromise = this;
+		return new Promise(function(resolve, reject) {
+			currentPromise.done(function(result) {
+				if (!success) {
+					resolve(result);
+				} else {
+					var thenSuccessResult = success(result);
+					if (!Promise.isPromise(thenSuccessResult)) {
+						resolve(thenSuccessResult);
+					} else {
+						thenSuccessResult.done(resolve, reject);
+					}
+				}
+			}, function(error) {
+				if (!failure) {
+					reject(error);
+				} else {
+					var thenFailureResult = failure(error);
+					if (!Promise.isPromise(thenFailureResult)) {
+						reject(thenFailureResult);
+					} else {
+						thenFailureResult.done(resolve, reject);
+					}
+				}
+			});
 		});
-
-		return wrapper.promise;
 	};
 
 	Promise.prototype.catch = function(failure) {
