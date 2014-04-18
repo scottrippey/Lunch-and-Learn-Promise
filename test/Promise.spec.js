@@ -1,7 +1,7 @@
 
-it("are all tests commented out?");
-
 describe('Promise', function() {
+	
+	it("are all tests commented out?");
 	
     xdescribe('done', function() {
         it("should fire success", function() {
