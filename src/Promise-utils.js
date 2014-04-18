@@ -1,16 +1,23 @@
 	/* Promise static methods; utilities for promises */
 
 	Promise.isPromise = function(promise) {
-		return (promise instanceof Promise) || (typeof promise === 'object' && typeof promise.then === 'function');
+
 	};
+
 	Promise.from = function(promise) {
-		return Promise.isPromise(promise) ? promise : Promise.wrap(promise);
+
 	};
-	Promise.wrap = function(result) {
-		return new Promise(function(resolve, reject) { resolve(result); });
+
+	Promise.resolved = function(result) {
+
 	};
-	Promise.wrapError = function(error) {
-		return new Promise(function(resolve, reject) { reject(error); });
+
+	Promise.rejected = function(error) {
+
+	};
+
+	Promise.delay = function(delay) {
+
 	};
 
 	Promise.all = function(promises) {
@@ -48,10 +55,3 @@
 			}
 		});
 	};
-
-	Promise.delay = function(delay) {
-		return new Promise(function(resolve, reject) {
-			setTimeout(resolve, delay);
-		});
-	};
-
