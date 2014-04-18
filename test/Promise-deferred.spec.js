@@ -1,4 +1,4 @@
-describe('Deferred', function() {
+xdescribe('Deferred', function() {
     it("should ignore multiple resolutions", function() {
 	    var d = Promise.deferred();
         expect(d.promise.getResultNow()).toBe(undefined);
