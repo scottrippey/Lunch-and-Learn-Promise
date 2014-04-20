@@ -20,7 +20,7 @@
 				resolve(results);
 			} else {
 				promises.forEach(function (promise, i) {
-					promise.done(function (result) {
+					promise.then(function (result) {
 						results[i] = result;
 						remaining--;
 						if (remaining === 0)
@@ -38,7 +38,7 @@
 				reject(errors);
 			} else {
 				promises.forEach(function (promise, i) {
-					promise.done(resolve, function (error) {
+					promise.then(resolve, function (error) {
 						errors[i] = error;
 						remaining--;
 						if (remaining === 0)

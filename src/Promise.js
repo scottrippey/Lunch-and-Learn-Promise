@@ -27,7 +27,7 @@
 				successCallbacks = failureCallbacks = null;
 			}
 		}
-		function done(success, failure) {
+		function then(success, failure) {
 			if (state === UNRESOLVED) {
 				if (success)
 					successCallbacks.push(success);
@@ -43,36 +43,36 @@
 		}
 
 		var promise = this;
-		promise.done = done;
+		promise.then = then;
 
 		resolveRejectCallback(resolve, reject);
 	}
 
-	/* Promise prototype methods; everything relies on Promise.done */
+	/* Promise prototype methods; everything relies on Promise.then */
 
-	Promise.prototype.then = function(success, failure) {
+	Promise.prototype.pipe = function(success, failure) {
 		var currentPromise = this;
 		return new Promise(function(resolve, reject) {
-			currentPromise.done(function(result) {
+			currentPromise.then(function(result) {
 				if (!success) {
 					resolve(result);
 				} else {
-					var thenSuccessResult = success(result);
-					if (!Promise.isPromise(thenSuccessResult)) {
-						resolve(thenSuccessResult);
+					var successResult = success(result);
+					if (!Promise.isPromise(successResult)) {
+						resolve(successResult);
 					} else {
-						thenSuccessResult.done(resolve, reject);
+						successResult.then(resolve, reject);
 					}
 				}
 			}, function(error) {
 				if (!failure) {
 					reject(error);
 				} else {
-					var thenFailureResult = failure(error);
-					if (!Promise.isPromise(thenFailureResult)) {
-						reject(thenFailureResult);
+					var failureResult = failure(error);
+					if (!Promise.isPromise(failureResult)) {
+						reject(failureResult);
 					} else {
-						thenFailureResult.done(resolve, reject);
+						failureResult.then(resolve, reject);
 					}
 				}
 			});
@@ -84,5 +84,5 @@
 	};
 
 	Promise.prototype.finally = function(successOrFailure) {
-		return this.done(successOrFailure, successOrFailure);
+		return this.then(successOrFailure, successOrFailure);
 	};

@@ -14,7 +14,7 @@
 			xhr.send();
 		});
 		if (options.autoRetry) {
-			promise = promise.then(null, function(xhr) {
+			promise = promise.pipe(null, function(xhr) {
 				options.autoRetry--;
 				return xhr(options);
 			});
@@ -22,5 +22,5 @@
 		return promise;
 	}
 	xhr.json = function(options) {
-		return xhr(options).then(function(responseText) { return JSON.parse(responseText); });
+		return xhr(options).pipe(function(responseText) { return JSON.parse(responseText); });
 	};

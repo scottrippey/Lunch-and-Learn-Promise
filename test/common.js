@@ -13,13 +13,13 @@ simulateAsync = function() {
 };
 Promise.prototype.getResultNow = function() {
 	var promiseResult;
-	this.done(function(result) { promiseResult = result; });
+	this.then(function(result) { promiseResult = result; });
 	simulateAsync();
 	return promiseResult;
 };
 Promise.prototype.getErrorNow = function() {
 	var promiseError;
-	this.done(null, function(error) { promiseError = error; });
+	this.then(null, function(error) { promiseError = error; });
 	simulateAsync();
 	return promiseError;
 };
