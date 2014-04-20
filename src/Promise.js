@@ -94,12 +94,12 @@
 					resolve(result);
 				} else {
 					var successResult = success(result);
-					if (!Promise.isPromise(successResult)) {
-						// Pass-through the new value:
-						resolve(successResult);
-					} else {
+					if (successResult instanceof Promise) {
 						// Chain to the returned promise:
 						successResult.then(resolve, reject);
+					} else {
+						// Pass-through the new value:
+						resolve(successResult);
 					}
 				}
 			}, function(error) {
@@ -108,12 +108,12 @@
 					reject(error);
 				} else {
 					var failureResult = failure(error);
-					if (!Promise.isPromise(failureResult)) {
-						// Pass-through the new value:
-						reject(failureResult);
-					} else {
+					if (failureResult instanceof Promise) {
 						// Chain to the returned promise:
 						failureResult.then(resolve, reject);
+					} else {
+						// Pass-through the new value:
+						reject(failureResult);
 					}
 				}
 			});
@@ -129,3 +129,4 @@
 	Promise.prototype.finally = function(successOrFailure) {
 		this.then(successOrFailure, successOrFailure);
 	};
+
