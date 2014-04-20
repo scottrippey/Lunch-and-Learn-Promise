@@ -1,77 +1,118 @@
-
-	/* Core Promise; exposes resolve and reject using an immediate callback */
-	function Promise(resolveRejectCallback) {
-		if (!(this instanceof Promise)) return new Promise(resolveRejectCallback);
+	/**
+	 * A Promise represents an async task.
+	 *
+	 * When the task is finished, the promise is either "resolved" with a result, or "rejected" with an error.
+	 *
+	 *
+	 * A Promise allows you to add "success" and "failure" handlers.
+	 * When the promise is resolved, it executes all success handlers; when rejected, it executes all failure handlers.
+	 * If you add a handler *after* the promise was resolved or rejected, it will be executed nearly immediately.
+	 *
+	 * @param {function(resolve, reject)} exposeResolveReject
+	 * @returns {Promise}
+	 * @constructor
+	 */
+	function Promise(exposeResolveReject) {
+		if (!(this instanceof Promise)) return new Promise(exposeResolveReject);
 
 		var UNRESOLVED = 0, RESOLVED = 1, REJECTED = 2;
 		var state = UNRESOLVED, finalResult;
-		var successCallbacks = [], failureCallbacks = [];
+		var successQueue = [], failureQueue = [];
 
+		/**
+		 * Resolves the promise, fires all success handlers
+		 * @param {*} [result]
+		 */
 		function resolve(result) {
 			if (state === UNRESOLVED) {
-				finalResult = result;
 				state = RESOLVED;
-				successCallbacks.forEach(function(success) {
-					setImmediate(function() { success(finalResult); });
-				});
-				successCallbacks = failureCallbacks = null;
+				finalResult = result;
+				successQueue.forEach(_fireCallback);
+				successQueue = failureQueue = null;
 			}
 		}
+
+		/**
+		 * Rejects the promise, fires all failure handlers
+		 * @param {*} [error]
+		 */
 		function reject(error) {
 			if (state === UNRESOLVED) {
-				finalResult = error;
 				state = REJECTED;
-				failureCallbacks.forEach(function(failure) {
-					setImmediate(function() { failure(finalResult); });
-				});
-				successCallbacks = failureCallbacks = null;
+				finalResult = error;
+				failureQueue.forEach(_fireCallback);
+				successQueue = failureQueue = null;
 			}
 		}
+
+		/**
+		 * Adds a success and failure callback, one of which will be called once the promise is resolved or rejected.
+		 * @param {function(result)} [success]
+		 * @param {function(error)} [failure]
+		 */
 		function then(success, failure) {
 			if (state === UNRESOLVED) {
 				if (success)
-					successCallbacks.push(success);
+					successQueue.push(success);
 				if (failure)
-					failureCallbacks.push(failure);
+					failureQueue.push(failure);
 			} else if (state === RESOLVED) {
 				if (success)
-					setImmediate(function() { success(finalResult); });
+					_fireCallback(success);
 			} else {
 				if (failure)
-					setImmediate(function() { failure(finalResult); });
+					_fireCallback(failure);
 			}
 		}
 
-		var promise = this;
-		promise.then = then;
+		function _fireCallback(callback) {
+			setImmediate(function() { callback(finalResult); });
+		}
 
-		resolveRejectCallback(resolve, reject);
+		this.then = then;
+
+		exposeResolveReject(resolve, reject);
 	}
 
-	/* Promise prototype methods; everything relies on Promise.then */
-
+	/**
+	 * Adds a success and failure handler, and returns a new chained promise.
+	 *
+	 * The return value of the success or failure handler will be used to continue the chain.
+	 * If the handler returns a promise, then that promise will be used to continue the chain.
+	 * If either handler is omitted, the chain will simply pass-through.
+	 *
+	 * @param {function(result)} [success]
+	 * @param {function(error)} [failure]
+	 * @returns {Promise}
+	 */
 	Promise.prototype.pipe = function(success, failure) {
 		var currentPromise = this;
 		return new Promise(function(resolve, reject) {
 			currentPromise.then(function(result) {
 				if (!success) {
+					// Pass-through:
 					resolve(result);
 				} else {
 					var successResult = success(result);
 					if (!Promise.isPromise(successResult)) {
+						// Pass-through the new value:
 						resolve(successResult);
 					} else {
+						// Chain to the returned promise:
 						successResult.then(resolve, reject);
 					}
 				}
 			}, function(error) {
 				if (!failure) {
+					// Pass-through:
 					reject(error);
 				} else {
 					var failureResult = failure(error);
 					if (!Promise.isPromise(failureResult)) {
+						// Pass-through the new value:
 						reject(failureResult);
 					} else {
+						// Chain to the returned promise:
 						failureResult.then(resolve, reject);
 					}
 				}
@@ -79,10 +120,12 @@
 		});
 	};
 
-	Promise.prototype.catch = function(failure) {
-		return this.then(null, failure);
-	};
-
+	/**
+	 * Adds the callback to both success and failure, so it will run regardless of the resolution.
+	 * This is useful for cleanup-related tasks.
+	 *
+	 * @param {function(resultOrError)} successOrFailure
+	 */
 	Promise.prototype.finally = function(successOrFailure) {
-		return this.then(successOrFailure, successOrFailure);
+		this.then(successOrFailure, successOrFailure);
 	};
