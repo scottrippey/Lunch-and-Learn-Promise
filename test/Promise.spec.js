@@ -87,10 +87,20 @@ describe('Promise', function() {
             var result = resolved("success").then(shouldPass(), shouldFail())
                 .then(function(result) { return rejected(result + " fail"); })
 	            .then(shouldFail(), shouldPass())
-                .then(null, function(error) { return resolved(error + " success"); })
+                .then(function(result) { return resolved(result + " success"); })
 	            .then(shouldPass(), shouldFail())
 	            .getResultNow();
 	        expect(result).toBe("success fail success");
+        });
+        it("should catch errors", function() {
+            var result = resolved("success").then(shouldPass(), shouldFail())
+                .then(function(result) { throw result + " throw"; }, null)
+                .then(null, function(error) { throw error + " throw"; })
+                .then(null, function(error) { return error + " return"; })
+                .then(function(result) { throw result + " throw"; }, null)
+                .then(null, function(error) { return error + " return"; })
+                .getResultNow();
+            expect(result).toBe("success throw throw return throw return");
         });
     });
     

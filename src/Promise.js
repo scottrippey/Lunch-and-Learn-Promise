@@ -57,17 +57,17 @@
 				if (!success) {
 					resolve(result);
 				} else {
-					chain(success);
+					chain(success, result);
 				}
 			}, function(error) {
 				if (!failure) {
 					reject(error);
 				} else {
-					chain(failure);
+					chain(failure, error);
 				}
 			});
 
-			function chain(callback) {
+			function chain(callback, result) {
 				try {
 					var newResult = callback(result);
 					if (Promise.isPromise(newResult)) {
@@ -78,7 +78,7 @@
 						resolve(newResult);
 					}
 				} catch (error) {
-					reject(newResult);
+					reject(error);
 				}
 			}
 		});
