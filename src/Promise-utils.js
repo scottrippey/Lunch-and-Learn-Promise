@@ -1,8 +1,5 @@
 	/* Promise static methods; utilities for promises */
 
-    Promise.isPromise = function(promise) {
-   		return (promise instanceof Promise) || (typeof promise === 'object' && typeof promise.then === 'function');
-   	};
    	Promise.from = function(promise) {
    		return Promise.isPromise(promise) ? promise : Promise.wrap(promise);
    	};
