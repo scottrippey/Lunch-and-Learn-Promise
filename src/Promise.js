@@ -57,31 +57,30 @@
 				if (!success) {
 					resolve(result);
 				} else {
-					var thenSuccessResult = success(result);
-
-					if (!Promise.isPromise(thenSuccessResult)) {
-						// Chain to the return value:
-						resolve(thenSuccessResult);
-					} else {
-						// Chain to the nested promise:
-						thenSuccessResult.done(resolve, reject);
-					}
+					chain(success);
 				}
 			}, function(error) {
 				if (!failure) {
 					reject(error);
 				} else {
-					var thenFailureResult = failure(error);
-
-					if (!Promise.isPromise(thenFailureResult)) {
-						// Chain to the return value:
-						resolve(thenFailureResult);
-					} else {
-						// Chain to the nested promise:
-						thenFailureResult.done(resolve, reject);
-					}
+					chain(failure);
 				}
 			});
+
+			function chain(callback) {
+				try {
+					var newResult = callback(result);
+					if (Promise.isPromise(newResult)) {
+						// Chain to the nested promise:
+						newResult.done(resolve, reject);
+					} else {
+						// Chain the return value:
+						resolve(newResult);
+					}
+				} catch (error) {
+					reject(newResult);
+				}
+			}
 		});
 	};
 
@@ -92,4 +91,8 @@
 	Promise.prototype.finally = function(successOrFailure) {
 		this.done(successOrFailure, successOrFailure);
 		return this;
+	};
+
+	Promise.isPromise = function(promise) {
+		return (promise instanceof Promise);
 	};
