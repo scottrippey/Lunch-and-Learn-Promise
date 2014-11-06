@@ -90,5 +90,6 @@
 	};
 
 	Promise.prototype.finally = function(successOrFailure) {
-		return this.done(successOrFailure, successOrFailure);
+		this.done(successOrFailure, successOrFailure);
+		return this;
 	};
