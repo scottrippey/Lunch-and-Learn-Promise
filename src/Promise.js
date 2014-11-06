@@ -70,7 +70,7 @@
 				} else {
 					var thenFailureResult = failure(error);
 					if (!Promise.isPromise(thenFailureResult)) {
-						reject(thenFailureResult);
+						resolve(thenFailureResult);
 					} else {
 						thenFailureResult.done(resolve, reject);
 					}
