@@ -58,9 +58,12 @@
 					resolve(result);
 				} else {
 					var thenSuccessResult = success(result);
+
 					if (!Promise.isPromise(thenSuccessResult)) {
+						// Chain to the return value:
 						resolve(thenSuccessResult);
 					} else {
+						// Chain to the nested promise:
 						thenSuccessResult.done(resolve, reject);
 					}
 				}
@@ -69,9 +72,12 @@
 					reject(error);
 				} else {
 					var thenFailureResult = failure(error);
+
 					if (!Promise.isPromise(thenFailureResult)) {
+						// Chain to the return value:
 						resolve(thenFailureResult);
 					} else {
+						// Chain to the nested promise:
 						thenFailureResult.done(resolve, reject);
 					}
 				}
